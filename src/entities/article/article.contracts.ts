@@ -14,8 +14,8 @@ export const ArticleSchema = z.object({
   description: z.string(),
   body: z.string(),
   tagList: z.string().array(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
   favorited: z.boolean(),
   favoritesCount: z.number(),
   author: AuthorEntitySchema, // Use the Author entity schema

@@ -1,38 +1,42 @@
+// File: src/shared/api/api.contracts.ts
 import { z } from 'zod';
 
+// Author schema for an author object within an article from the /articles list
 const AuthorInArticleDtoSchema = z.object({
   username: z.string(),
-  email: z.string().optional(), // Backend sends this
-  // bio, image, and following are NOT sent by your backend in the article list author object.
-  // We make them optional here so Zod doesn't fail if they are missing.
-  // Defaults for these will be handled during transformation to the frontend entity.
+  email: z.string().email().optional(), // Assuming email is optional and has email format
   bio: z.string().optional().nullable(),
   image: z.string().optional().nullable(),
   following: z.boolean().optional(),
 });
 
-export const ArticleDtoSchema = z.object({
-  article: z.object({
-    slug: z.string(),
-    title: z.string(),
-    description: z.string(),
-    body: z.string(),
-    tagList: z.string().array(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
-    favorited: z.boolean(),
-    favoritesCount: z.number(),
-    author: AuthorInArticleDtoSchema, // Use the modified author schema
-    comments: z.array(z.any()).optional(), // Add to allow the unexpected 'comments' array
-  }),
+// Article DTO Schema (for one article object, typically nested or in an array)
+export const SingleArticleObjectDtoSchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  description: z.string(),
+  body: z.string(),
+  tagList: z.string().array(),
+  createdAt: z.string(), // Use the preprocessed schema
+  updatedAt: z.string(), // Use the preprocessed schema
+  favorited: z.boolean(),
+  favoritesCount: z.number(),
+  author: AuthorInArticleDtoSchema,
+  comments: z.array(z.any()).optional(), // To allow the unexpected 'comments' array
 });
 
+// Schema for the { "article": { ... } } wrapper (for single article responses)
+export const ArticleDtoSchema = z.object({
+  article: SingleArticleObjectDtoSchema,
+});
+
+// Schema for the { "articles": [ ... ], "articlesCount": ... } wrapper (for multiple articles response)
 export const ArticlesDtoSchema = z.object({
-  articles: z.array(ArticleDtoSchema.shape.article), // This now uses the article structure defined above
+  articles: z.array(SingleArticleObjectDtoSchema), // Array of the plain article objects
   articlesCount: z.number(),
 });
 
-// --- Other DTOs remain the same ---
+// --- Other DTOs (FilterQueryDtoSchema, CreateArticleDtoSchema, etc.) ---
 export const FilterQueryDtoSchema = z.object({
   offset: z.number().min(0),
   limit: z.number().min(1),
@@ -43,6 +47,7 @@ export const FilterQueryDtoSchema = z.object({
 
 export const CreateArticleDtoSchema = z.object({
   article: z.object({
+    // Matches SingleArticleObjectDtoSchema structure generally, but for creation
     title: z.string().min(1),
     description: z.string().min(1),
     body: z.string().min(1),
@@ -52,24 +57,30 @@ export const CreateArticleDtoSchema = z.object({
 
 export const UpdateArticleDtoSchema = z.object({
   article: z.object({
+    // Similar to CreateArticleDtoSchema, but all fields optional
     title: z.string().optional(),
     description: z.string().optional(),
     body: z.string().optional(),
     tagList: z.optional(z.string().array()),
   }),
 });
+
+// Author schema for a comment's author - assuming this might be more complete
+// or could also use a specific "AuthorForCommentDtoSchema" if different
+const AuthorForCommentDtoSchema = z.object({
+  username: z.string(),
+  bio: z.string().nullable(),
+  image: z.string(), // Note: original was z.string().nullable() - check BE for image in comment author
+  following: z.boolean(),
+});
+
 export const CommentDtoSchema = z.object({
   comment: z.object({
     id: z.number(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+    createdAt: z.string(), // Use preprocessed for consistency if format is same
+    updatedAt: z.string(), // Use preprocessed for consistency
     body: z.string(),
-    author: z.object({
-      username: z.string(),
-      bio: z.nullable(z.string()),
-      image: z.string(),
-      following: z.boolean(),
-    }),
+    author: AuthorForCommentDtoSchema,
   }),
 });
 
@@ -83,12 +94,14 @@ export const CreateCommentDtoSchema = z.object({
   }),
 });
 
+// This ProfileDtoSchema is for the /profiles/{username} endpoint
+// and should represent the complete author profile structure.
 export const ProfileDtoSchema = z.object({
   profile: z.object({
     username: z.string(),
     bio: z.string().nullable(),
     image: z.string().nullable(),
-    following: z.boolean(),
+    following: z.boolean(), // This 'following' is specific to the viewing user
   }),
 });
 
