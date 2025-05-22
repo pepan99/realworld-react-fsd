@@ -1,25 +1,45 @@
-import type { ArticleDto, ArticlesDto, FilterQueryDto } from '~shared/api/api.types';
+import type {
+  ArticlesDto as ApiArticlesDto,
+  ArticleDto as ApiArticleDtoShape,
+  FilterQueryDto,
+} from '~shared/api/api.types';
 import type { Article, Articles, FilterQuery } from './article.types';
 
-export function transformArticleDtoToArticle(articleDto: ArticleDto): Article {
-  const { article } = articleDto;
+type BackendArticleObject = ApiArticlesDto['articles'][number];
 
+export function transformSingleBackendArticleToArticleEntity(backendArticle: BackendArticleObject): Article {
   return {
-    ...article,
-    tagList: article.tagList.filter(Boolean),
+    slug: backendArticle.slug,
+    title: backendArticle.title,
+    description: backendArticle.description,
+    body: backendArticle.body,
+    tagList: backendArticle.tagList.filter(Boolean),
+    createdAt: backendArticle.createdAt,
+    updatedAt: backendArticle.updatedAt,
+    favorited: backendArticle.favorited,
+    favoritesCount: backendArticle.favoritesCount,
     author: {
-      ...article.author,
-      image: article.author?.image || '',
-      bio: article.author?.bio || '',
+      username: backendArticle.author.username,
+      email: backendArticle.author.email,
+      bio: backendArticle.author.bio || '',
+      image: backendArticle.author.image || '',
+      following: backendArticle.author.following || false,
     },
   };
 }
 
-export function transformArticlesDtoToArticles(articlesDto: ArticlesDto): Articles {
+export function transformArticleDtoToArticle(articleDto: ApiArticleDtoShape): Article {
+  const backendArticle = articleDto.article;
+  return transformSingleBackendArticleToArticleEntity(backendArticle);
+}
+
+export function transformArticlesDtoToArticles(articlesDto: ApiArticlesDto): Articles {
   const { articles, articlesCount } = articlesDto;
 
   return {
-    articles: Object.fromEntries(articles.map((article) => [article.slug, transformArticleDtoToArticle({ article })])),
+    articles: Object.fromEntries(
+      articles.map((article) => [article.slug, transformSingleBackendArticleToArticleEntity(article)]),
+    ),
     articlesCount,
   };
 }

@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+const AuthorInArticleDtoSchema = z.object({
+  username: z.string(),
+  email: z.string().optional(), // Backend sends this
+  // bio, image, and following are NOT sent by your backend in the article list author object.
+  // We make them optional here so Zod doesn't fail if they are missing.
+  // Defaults for these will be handled during transformation to the frontend entity.
+  bio: z.string().optional().nullable(),
+  image: z.string().optional().nullable(),
+  following: z.boolean().optional(),
+});
+
 export const ArticleDtoSchema = z.object({
   article: z.object({
     slug: z.string(),
@@ -11,20 +22,17 @@ export const ArticleDtoSchema = z.object({
     updatedAt: z.string().datetime(),
     favorited: z.boolean(),
     favoritesCount: z.number(),
-    author: z.object({
-      username: z.string(),
-      bio: z.string().nullable(),
-      image: z.string().nullable(),
-      following: z.boolean(),
-    }),
+    author: AuthorInArticleDtoSchema, // Use the modified author schema
+    comments: z.array(z.any()).optional(), // Add to allow the unexpected 'comments' array
   }),
 });
 
 export const ArticlesDtoSchema = z.object({
-  articles: z.array(ArticleDtoSchema.shape.article),
+  articles: z.array(ArticleDtoSchema.shape.article), // This now uses the article structure defined above
   articlesCount: z.number(),
 });
 
+// --- Other DTOs remain the same ---
 export const FilterQueryDtoSchema = z.object({
   offset: z.number().min(0),
   limit: z.number().min(1),
@@ -50,7 +58,6 @@ export const UpdateArticleDtoSchema = z.object({
     tagList: z.optional(z.string().array()),
   }),
 });
-
 export const CommentDtoSchema = z.object({
   comment: z.object({
     id: z.number(),

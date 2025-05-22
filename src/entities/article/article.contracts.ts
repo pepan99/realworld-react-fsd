@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const AuthorEntitySchema = z.object({
+  username: z.string(),
+  email: z.string().optional(),
+  bio: z.string(),
+  image: z.string(),
+  following: z.boolean(),
+});
+
 export const ArticleSchema = z.object({
   slug: z.string(),
   title: z.string(),
@@ -10,12 +18,7 @@ export const ArticleSchema = z.object({
   updatedAt: z.string().datetime(),
   favorited: z.boolean(),
   favoritesCount: z.number(),
-  author: z.object({
-    username: z.string(),
-    bio: z.string(),
-    image: z.string(),
-    following: z.boolean(),
-  }),
+  author: AuthorEntitySchema, // Use the Author entity schema
 });
 
 export const ArticlesSchema = z.object({
