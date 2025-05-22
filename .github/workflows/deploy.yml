@@ -1,0 +1,40 @@
+name: Deploy Static Website to Azure Blob Storage
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' 
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build application
+        run: yarn build:prod
+        env:
+          API: ${{ secrets.API_ENDPOINT }}
+
+      - name: Deploy to Azure Blob Storage
+        uses: Azure/actions-blob-storage-upload@v1
+        with:
+          connection-string: ${{ secrets.AZURE_BLOB_CONNECTION_STRING }}
+          source-path: 'build' # Path to your build output
+          container-name: '$web' # Standard container for static websites
+          # blob-prefix: '' # Optional: if you want to deploy to a subfolder
+          # content-type: '' # Optional: set default content type
+          # content-encoding: '' # Optional: set default content encoding
+          # access-tier: '' # Optional: set access tier
+          # metadata: '' # Optional: set metadata
+          # cache-control: '' # Optional: set cache control header
+          # overwrite: 'true' # Optional: overwrite existing blobs
